@@ -17,7 +17,7 @@ PKG_SOURCE_PROTO:=git
 PKG_SOURCE_URL:=file:///home/me/Code/openthread
 PKG_SOURCE_VERSION:=ow
 
-PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)-$(BUILD_VARIANT)/$(PKG_NAME)-$(PKG_VERSION)
+PKG_BUILD_DIR:=$(BUILD_DIR)/$(PKG_NAME)/$(PKG_NAME)-$(PKG_VERSION)
 PKG_MAINTAINER:=Yakun Xu <xyk@google.com>
 
 PKG_INSTALL:=1
@@ -33,8 +33,6 @@ define Package/openthread
   SECTION:=net
   CATEGORY:=Network
   URL:=http://github.com/openthread/openthread
-  SUBMENU:=VPN
-  MENU:=1
   DEPENDS:= +kmod-tun +libstdcpp
   PROVIDES:=openthread
 endef
@@ -45,9 +43,13 @@ CONFIGURE_VARS += \
 	IPROUTE=/sbin/ip \
 	NETSTAT=/sbin/netstat
 
-TARGET_CFLAGS += -ffunction-sections -fdata-sections
-TARGET_CXXFLAGS += -fno-exceptions -fno-rtti
-TARGET_LDFLAGS += -Wl,--gc-sections
+TARGET_CFLAGS += -g -O0 -ffunction-sections -fdata-sections
+TARGET_CXXFLAGS += -g -O0
+TARGET_CPPFLAGS += \
+  -I$(PKG_BUILD_DIR)/src/posix/platform \
+  -DOPENTHREAD_PROJECT_CORE_CONFIG_FILE='\"openthread-core-posix-config.h\"' \
+  -DOPENTHREAD_CONFIG_LOG_LEVEL=4 \
+	$(NULL)
 
 define Build/Configure
 	$(call Build/Configure/Default,     \
@@ -70,8 +72,9 @@ define Build/Configure
 		--enable-legacy                   \
 		--enable-mac-filter               \
 		--enable-posix-app                \
+		--enable-platform-udp             \
+		--enable-platform-netif           \
 		--enable-service                  \
-		--enable-udp-proxy                \
 		--with-ncp-bus=uart               \
 		)
 endef
